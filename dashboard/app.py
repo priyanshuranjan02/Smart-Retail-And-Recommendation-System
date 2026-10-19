@@ -16,7 +16,11 @@ if ROOT_DIR not in sys.path:
 
 import streamlit as st
 import pandas as pd
-from components.data_loader import check_artifact_status, load_kpis
+from components.data_loader import (
+    check_artifact_status,
+    load_kpis,
+    ensure_warehouse_database,
+)
 from components.metrics import format_currency, format_number
 from components.insights import render_footer
 
@@ -62,6 +66,10 @@ with st.sidebar:
     st.markdown("---")
 
     st.subheader("Data Warehouse Status")
+    try:
+        ensure_warehouse_database()
+    except Exception as e:
+        st.error(f"⚠️ **Warehouse Initialization Error:** {e}")
     status = check_artifact_status()
     for name, is_ready in status.items():
         icon = "🟢" if is_ready else "🔴"

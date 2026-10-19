@@ -29,7 +29,7 @@ This project implements an end-to-end, production-grade **Smart Retail Analytics
 - **Customer Segmentation (RFM + K-Means):** Unsupervised clustering on standardized Recency, Frequency, and Monetary metrics with Elbow/Silhouette evaluation and deterministic multi-attribute business labeling.
 - **Complementary RFM Quintile Scoring:** 1–5 score-based tiering (Champions, Potential Loyalists, Needs Attention, At-Risk) offering rules-based comparisons against machine learning clusters.
 - **Market Basket Analysis (Apriori):** Association rule generation calculating Support, Confidence, and Lift metrics to power data-driven cross-selling and product bundling hypotheses.
-- **Automated Testing & CI:** Comprehensive unit test suite (35 passing tests) and GitHub Actions CI workflow covering Python 3.10, 3.11, and 3.12. Locally verified on Python 3.14.
+- **Automated Testing & CI:** Comprehensive unit test suite (48 passing tests) and GitHub Actions CI workflow covering Python 3.10, 3.11, and 3.12. Locally verified on Python 3.14.
 
 ---
 
@@ -254,11 +254,25 @@ python market_basket_analysis.py
 
 ## 9. Launching the Interactive BI Dashboard
 
+### Local Execution
 Launch the Streamlit multi-page application with a single command:
 ```bash
 streamlit run dashboard/app.py
 ```
 Open your browser to `http://localhost:8501`.
+
+### Streamlit Community Cloud Deployment
+The repository is fully configured for zero-friction one-click deployment on [Streamlit Community Cloud](https://share.streamlit.io/):
+
+1. **Repository:** Select `priyanshuranjan02/Smart-Retail-And-Recommendation-System`
+2. **Branch:** `main` (or your feature branch)
+3. **Main file path:** `dashboard/app.py`
+4. **Python version:** 3.10, 3.11, or 3.12
+5. **App dependencies:** Automatically resolved from root `requirements.txt`.
+6. **Zero-Config Cloud Warehouse Initialization:**
+   - On the cloud instance, `retail_warehouse.db` is initialized automatically on first startup via `ensure_warehouse_database()` in `dashboard/components/data_loader.py`.
+   - It builds directly from the tracked `data/cleaned/online_retail_cleaned.csv` and `warehouse_schema.sql` in seconds using atomic replacement and thread-safe locking.
+   - All analytical CSV/JSON artifacts (`customer_segments.csv`, `association_rules.csv`, `mba_summary.json`, etc.) are tracked directly in Git, allowing instant cloud readiness without downloading the raw source dataset or retraining models.
 
 ---
 
@@ -456,42 +470,55 @@ configfile: pytest.ini
 testpaths: tests
 
 tests/test_bi_queries.py::test_get_kpis_accuracy PASSED                  [  2%]
-tests/test_bi_queries.py::test_get_kpis_with_country_filter PASSED       [  5%]
-tests/test_bi_queries.py::test_get_monthly_sales PASSED                  [  8%]
-tests/test_bi_queries.py::test_get_top_products PASSED                   [ 11%]
-tests/test_bi_queries.py::test_execute_safe_query_select_allowed PASSED  [ 14%]
-tests/test_bi_queries.py::test_execute_safe_query_blocks_destructive_ddl PASSED [ 17%]
-tests/test_bi_queries.py::test_execute_safe_query_blocks_insert PASSED   [ 20%]
-tests/test_bi_queries.py::test_execute_safe_query_blocks_update PASSED   [ 23%]
-tests/test_bi_queries.py::test_execute_safe_query_blocks_embedded_drop PASSED [ 26%]
-tests/test_bi_queries.py::test_execute_safe_query_blocks_empty PASSED    [ 29%]
-tests/test_customer_segmentation.py::test_calculate_rfm PASSED           [ 31%]
-tests/test_customer_segmentation.py::test_calculate_rfm_scores PASSED    [ 34%]
-tests/test_customer_segmentation.py::test_assign_defensible_cluster_labels PASSED [ 37%]
-tests/test_dashboard_loaders.py::test_get_db_connection_missing_raises PASSED [ 40%]
-tests/test_dashboard_loaders.py::test_check_artifact_status PASSED       [ 42%]
-tests/test_dashboard_loaders.py::test_load_countries_list PASSED         [ 45%]
-tests/test_dashboard_loaders.py::test_load_kpis_live PASSED              [ 48%]
-tests/test_dashboard_loaders.py::test_load_customer_segments_live PASSED [ 51%]
-tests/test_dashboard_loaders.py::test_load_clustering_validation_live PASSED [ 54%]
-tests/test_dashboard_loaders.py::test_load_association_rules_live PASSED [ 57%]
-tests/test_dashboard_loaders.py::test_load_warehouse_tables_live PASSED  [ 60%]
-tests/test_data_cleaning.py::test_clean_dataset_removes_cancellations PASSED [ 62%]
-tests/test_data_cleaning.py::test_clean_dataset_removes_negative_and_zero_quantities PASSED [ 65%]
-tests/test_data_cleaning.py::test_clean_dataset_removes_invalid_unit_prices PASSED [ 68%]
-tests/test_data_cleaning.py::test_clean_dataset_removes_missing_customer_ids PASSED [ 71%]
-tests/test_data_cleaning.py::test_clean_dataset_deduplication PASSED     [ 74%]
-tests/test_data_cleaning.py::test_clean_dataset_total_amount_calculation PASSED [ 77%]
-tests/test_market_basket_analysis.py::test_build_transaction_baskets PASSED [ 80%]
-tests/test_market_basket_analysis.py::test_find_frequent_itemsets PASSED [ 82%]
-tests/test_market_basket_analysis.py::test_generate_rules PASSED         [ 85%]
-tests/test_warehouse.py::test_dim_time_generation PASSED                 [ 88%]
-tests/test_warehouse.py::test_dim_region_mapping PASSED                  [ 91%]
-tests/test_warehouse.py::test_dim_product_aggregation PASSED             [ 94%]
+tests/test_bi_queries.py::test_get_kpis_with_country_filter PASSED       [  4%]
+tests/test_bi_queries.py::test_get_monthly_sales PASSED                  [  6%]
+tests/test_bi_queries.py::test_get_top_products PASSED                   [  8%]
+tests/test_bi_queries.py::test_execute_safe_query_select_allowed PASSED  [ 10%]
+tests/test_bi_queries.py::test_execute_safe_query_blocks_destructive_ddl PASSED [ 12%]
+tests/test_bi_queries.py::test_execute_safe_query_blocks_insert PASSED   [ 14%]
+tests/test_bi_queries.py::test_execute_safe_query_blocks_update PASSED   [ 16%]
+tests/test_bi_queries.py::test_execute_safe_query_blocks_embedded_drop PASSED [ 18%]
+tests/test_bi_queries.py::test_execute_safe_query_blocks_empty PASSED    [ 20%]
+tests/test_customer_segmentation.py::test_calculate_rfm PASSED           [ 22%]
+tests/test_customer_segmentation.py::test_calculate_rfm_scores PASSED    [ 25%]
+tests/test_customer_segmentation.py::test_assign_defensible_cluster_labels PASSED [ 27%]
+tests/test_dashboard_loaders.py::test_get_db_connection_missing_raises PASSED [ 29%]
+tests/test_dashboard_loaders.py::test_ensure_warehouse_database_creates_missing PASSED [ 31%]
+tests/test_dashboard_loaders.py::test_ensure_warehouse_database_reuses_existing PASSED [ 33%]
+tests/test_dashboard_loaders.py::test_ensure_warehouse_database_failed_build_cleans_up PASSED [ 35%]
+tests/test_dashboard_loaders.py::test_ensure_warehouse_database_missing_prerequisites_raises PASSED [ 37%]
+tests/test_dashboard_loaders.py::test_check_artifact_status PASSED       [ 39%]
+tests/test_dashboard_loaders.py::test_load_countries_list PASSED         [ 41%]
+tests/test_dashboard_loaders.py::test_load_kpis_live PASSED              [ 43%]
+tests/test_dashboard_loaders.py::test_load_customer_segments_live PASSED [ 45%]
+tests/test_dashboard_loaders.py::test_load_clustering_validation_live PASSED [ 47%]
+tests/test_dashboard_loaders.py::test_load_association_rules_live PASSED [ 50%]
+tests/test_dashboard_loaders.py::test_load_warehouse_tables_live PASSED  [ 52%]
+tests/test_data_cleaning.py::test_clean_dataset_removes_cancellations PASSED [ 54%]
+tests/test_data_cleaning.py::test_clean_dataset_removes_negative_and_zero_quantities PASSED [ 56%]
+tests/test_data_cleaning.py::test_clean_dataset_removes_invalid_unit_prices PASSED [ 58%]
+tests/test_data_cleaning.py::test_clean_dataset_removes_missing_customer_ids PASSED [ 60%]
+tests/test_data_cleaning.py::test_clean_dataset_deduplication PASSED     [ 62%]
+tests/test_data_cleaning.py::test_clean_dataset_total_amount_calculation PASSED [ 64%]
+tests/test_data_cleaning.py::test_acquire_raw_dataset_existing_file PASSED [ 66%]
+tests/test_data_cleaning.py::test_acquire_raw_dataset_successful_download PASSED [ 68%]
+tests/test_data_cleaning.py::test_acquire_raw_dataset_ssl_verification_failure PASSED [ 70%]
+tests/test_data_cleaning.py::test_acquire_raw_dataset_url_error_with_ssl_reason PASSED [ 72%]
+tests/test_data_cleaning.py::test_acquire_raw_dataset_interrupted_download_cleans_temp_file PASSED [ 75%]
+tests/test_data_cleaning.py::test_acquire_raw_dataset_general_network_failure PASSED [ 77%]
+tests/test_data_cleaning.py::test_acquire_raw_dataset_rejects_non_https_url PASSED [ 79%]
+tests/test_market_basket_analysis.py::test_format_itemset_canonical PASSED [ 81%]
+tests/test_market_basket_analysis.py::test_build_transaction_baskets PASSED [ 83%]
+tests/test_market_basket_analysis.py::test_find_frequent_itemsets PASSED [ 85%]
+tests/test_market_basket_analysis.py::test_generate_rules PASSED         [ 87%]
+tests/test_market_basket_analysis.py::test_mba_outputs_byte_identical_reproducibility PASSED [ 89%]
+tests/test_warehouse.py::test_dim_time_generation PASSED                 [ 91%]
+tests/test_warehouse.py::test_dim_region_mapping PASSED                  [ 93%]
+tests/test_warehouse.py::test_dim_product_aggregation PASSED             [ 95%]
 tests/test_warehouse.py::test_dim_customer_aggregation PASSED            [ 97%]
 tests/test_warehouse.py::test_warehouse_fact_and_foreign_key_integrity PASSED [100%]
 
-============================== 35 passed in 1.31s ==============================
+============================== 48 passed in 1.36s ==============================
 ```
 
 ---
