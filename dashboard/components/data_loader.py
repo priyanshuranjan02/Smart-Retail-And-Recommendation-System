@@ -6,6 +6,8 @@ Provides cached, thread-safe access to the SQLite Warehouse and analytical artif
 import os
 import json
 import sqlite3
+import threading
+import time
 import pandas as pd
 import streamlit as st
 from typing import Optional, Dict, Any, Tuple
@@ -16,13 +18,79 @@ import sys
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-DB_PATH = os.path.join(BASE_DIR, "data", "processed", "retail_warehouse.db")
+DEFAULT_DB_PATH = os.path.join(BASE_DIR, "data", "processed", "retail_warehouse.db")
+DB_PATH = DEFAULT_DB_PATH
 SEGMENTS_PATH = os.path.join(BASE_DIR, "data", "processed", "customer_segments.csv")
 CLUSTERING_VAL_PATH = os.path.join(BASE_DIR, "data", "processed", "clustering_validation.json")
 RULES_PATH = os.path.join(BASE_DIR, "data", "processed", "association_rules.csv")
 ITEMSETS_PATH = os.path.join(BASE_DIR, "data", "processed", "frequent_itemsets.csv")
 MBA_SUMMARY_PATH = os.path.join(BASE_DIR, "data", "processed", "mba_summary.json")
 CLEANED_CSV_PATH = os.path.join(BASE_DIR, "data", "cleaned", "online_retail_cleaned.csv")
+SCHEMA_SQL_PATH = os.path.join(BASE_DIR, "warehouse_schema.sql")
+
+_db_init_lock = threading.Lock()
+
+
+def ensure_warehouse_database(
+    db_path: Optional[str] = None,
+    cleaned_csv_path: Optional[str] = None,
+    schema_path: Optional[str] = None,
+    force: bool = False
+) -> str:
+    """
+    Ensure the SQLite retail warehouse database exists.
+    If it exists (and force=False), reuses it without rebuilding.
+    If missing, safely builds it from cleaned CSV and schema SQL using a temporary file
+    and atomic replacement, preventing concurrent initialization and partial/corrupt files.
+    """
+    target_db = db_path if db_path is not None else DB_PATH
+    cleaned_file = cleaned_csv_path if cleaned_csv_path is not None else CLEANED_CSV_PATH
+    schema_file = schema_path if schema_path is not None else SCHEMA_SQL_PATH
+
+    if os.path.exists(target_db) and not force:
+        return target_db
+
+    with _db_init_lock:
+        # Double-checked locking to avoid duplicate builds across concurrent sessions
+        if os.path.exists(target_db) and not force:
+            return target_db
+
+        # Verify prerequisite files exist with clear actionable error messages
+        if not os.path.exists(cleaned_file):
+            raise FileNotFoundError(
+                f"Cleaned dataset not found at {cleaned_file}. "
+                "Unable to initialize warehouse database. Please run 'python data_cleaning.py' or 'python run_pipeline.py'."
+            )
+        if not os.path.exists(schema_file):
+            raise FileNotFoundError(
+                f"Warehouse schema SQL file not found at {schema_file}. "
+                "Unable to initialize warehouse database schema."
+            )
+
+        os.makedirs(os.path.dirname(os.path.abspath(target_db)), exist_ok=True)
+        temp_db_path = f"{target_db}.tmp.{os.getpid()}_{threading.get_ident()}_{int(time.time() * 1000)}"
+
+        try:
+            from build_warehouse import build_warehouse
+            # Build warehouse to temporary file without modifying or backing up target
+            build_warehouse(
+                cleaned_file=cleaned_file,
+                db_file=temp_db_path,
+                schema_file=schema_file,
+                force=True,
+                backup=False
+            )
+            # Atomically replace target database path only upon successful build
+            os.replace(temp_db_path, target_db)
+            return target_db
+        except Exception as e:
+            # Clean up temporary database file if left behind
+            if os.path.exists(temp_db_path):
+                try:
+                    os.remove(temp_db_path)
+                except OSError:
+                    pass
+            raise e
 
 
 def check_artifact_status() -> Dict[str, bool]:
@@ -40,6 +108,8 @@ def check_artifact_status() -> Dict[str, bool]:
 
 def get_db_connection() -> sqlite3.Connection:
     """Establish a read-only SQLite connection with foreign keys enabled."""
+    if DB_PATH == DEFAULT_DB_PATH and not os.path.exists(DB_PATH):
+        ensure_warehouse_database()
     if not os.path.exists(DB_PATH):
         raise FileNotFoundError(
             f"Warehouse database not found at {DB_PATH}. "
