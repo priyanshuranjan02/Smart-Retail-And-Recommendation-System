@@ -8,6 +8,10 @@
 [![Dashboard](https://img.shields.io/badge/BI%20Dashboard-Streamlit-red.svg)](dashboard/app.py)
 [![License: Academic](https://img.shields.io/badge/license-Academic%20Use-lightgrey.svg)](README.md)
 
+**Live Demo:** [Smart Retail Analytics & Recommendation Warehouse](https://smart-retail-analytics-warehouse.streamlit.app/)
+
+Explore the live interactive dashboard featuring **6 analytics modules** for sales intelligence, product performance, RFM customer segmentation, Apriori-based recommendations, and SQL warehouse exploration.
+
 ---
 
 ## 1. Problem Statement
