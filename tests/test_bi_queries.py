@@ -59,5 +59,31 @@ def test_execute_safe_query_blocks_destructive_ddl(in_memory_warehouse):
     with pytest.raises(ValueError, match="Only read-only SELECT or WITH"):
         execute_safe_query(in_memory_warehouse, "DROP TABLE Dim_Time")
 
-    with pytest.raises(ValueError, match="Disallowed DDL/DML keyword"):
+    with pytest.raises(ValueError, match="Multiple SQL statements are not permitted"):
         execute_safe_query(in_memory_warehouse, "SELECT * FROM Fact_Sales; DELETE FROM Dim_Product")
+
+
+def test_execute_safe_query_blocks_insert(in_memory_warehouse):
+    """Verify INSERT statements are rejected."""
+    with pytest.raises(ValueError, match="Only read-only SELECT or WITH"):
+        execute_safe_query(in_memory_warehouse, "INSERT INTO Dim_Product VALUES (999, 'X', 'X', 1.0, 1)")
+
+
+def test_execute_safe_query_blocks_update(in_memory_warehouse):
+    """Verify UPDATE statements are rejected."""
+    with pytest.raises(ValueError, match="Only read-only SELECT or WITH"):
+        execute_safe_query(in_memory_warehouse, "UPDATE Dim_Product SET Description='hacked'")
+
+
+def test_execute_safe_query_blocks_embedded_drop(in_memory_warehouse):
+    """Verify a SELECT containing DROP as a keyword is rejected."""
+    with pytest.raises(ValueError, match="Disallowed DDL/DML keyword"):
+        execute_safe_query(in_memory_warehouse, "SELECT 1 WHERE 1=1 DROP TABLE Dim_Time")
+
+
+def test_execute_safe_query_blocks_empty(in_memory_warehouse):
+    """Verify empty queries are rejected."""
+    with pytest.raises(ValueError, match="Empty query"):
+        execute_safe_query(in_memory_warehouse, "")
+    with pytest.raises(ValueError, match="Empty query"):
+        execute_safe_query(in_memory_warehouse, "   ")

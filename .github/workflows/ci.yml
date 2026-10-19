@@ -30,8 +30,13 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
+      - name: Build warehouse database for integration tests
+        run: |
+          python build_warehouse.py
+
       - name: Run automated test suite
         env:
           MPLCONFIGDIR: /tmp/matplotlib
+          PYTHONPATH: .
         run: |
           pytest -v

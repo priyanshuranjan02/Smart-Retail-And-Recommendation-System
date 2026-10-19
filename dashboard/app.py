@@ -99,7 +99,7 @@ try:
     with col1:
         st.metric("Total Warehouse Revenue", format_currency(kpis["GrossRevenue"], compact=True), help="Cumulative revenue across all valid transactions")
     with col2:
-        st.metric("Cleaned Fact Transactions", format_number(kpis["TotalOrders"]), help="Unique invoices after removing cancellations")
+        st.metric("Unique Orders", format_number(kpis["TotalOrders"]), help="Distinct invoices (orders) after removing cancellations and invalid records")
     with col3:
         st.metric("Unique Customers", format_number(kpis["UniqueCustomers"]), help="Unique identified accounts in Dim_Customer")
     with col4:

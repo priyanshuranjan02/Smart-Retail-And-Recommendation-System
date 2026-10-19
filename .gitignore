@@ -40,3 +40,6 @@ models/*.pkl
 
 # Logs
 *.log
+
+# Streamlit
+.streamlit/credentials.toml

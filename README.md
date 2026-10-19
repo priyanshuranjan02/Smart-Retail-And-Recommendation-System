@@ -3,7 +3,7 @@
 > **Enterprise-Grade E-Commerce Intelligence, Star Schema Data Warehousing, RFM Customer Clustering, and Apriori Basket Recommendations**
 
 [![CI Pipeline](https://github.com/priyanshuranjan02/Smart-Retail-And-Recommendation-System/actions/workflows/ci.yml/badge.svg)](https://github.com/priyanshuranjan02/Smart-Retail-And-Recommendation-System/actions/workflows/ci.yml)
-[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.14-blue.svg)](https://www.python.org/)
+[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/)
 [![Database](https://img.shields.io/badge/warehouse-SQLite%20Star%20Schema-green.svg)](warehouse_schema.sql)
 [![Dashboard](https://img.shields.io/badge/BI%20Dashboard-Streamlit-red.svg)](dashboard/app.py)
 [![License: Academic](https://img.shields.io/badge/license-Academic%20Use-lightgrey.svg)](README.md)
@@ -29,8 +29,7 @@ This project implements an end-to-end, production-grade **Smart Retail Analytics
 - **Customer Segmentation (RFM + K-Means):** Unsupervised clustering on standardized Recency, Frequency, and Monetary metrics with Elbow/Silhouette evaluation and deterministic multi-attribute business labeling.
 - **Complementary RFM Quintile Scoring:** 1–5 score-based tiering (Champions, Potential Loyalists, Needs Attention, At-Risk) offering rules-based comparisons against machine learning clusters.
 - **Market Basket Analysis (Apriori):** Association rule generation calculating Support, Confidence, and Lift metrics to power data-driven cross-selling and product bundling hypotheses.
-- **Interactive Multi-Page Streamlit BI Suite:** 6 comprehensive analytical dashboards built with Plotly interactive charts, dynamic filters, product search, and a safe read-only SQL warehouse console.
-- **Automated Testing & CI:** Complete unit test suite (30 passing tests) and GitHub Actions CI workflow covering Python 3.10 through 3.14.
+- **Automated Testing & CI:** Comprehensive unit test suite (35 passing tests) and GitHub Actions CI workflow covering Python 3.10, 3.11, and 3.12. Locally verified on Python 3.14.
 
 ---
 
@@ -95,7 +94,7 @@ This project implements an end-to-end, production-grade **Smart Retail Analytics
 
 | Layer | Technologies | Purpose |
 |---|---|---|
-| **Language** | Python 3.10+ (Tested up to 3.14) | Core application, ETL, and ML pipelines |
+| **Language** | Python 3.10+ (CI: 3.10–3.12, locally tested up to 3.14) | Core application, ETL, and ML pipelines |
 | **Data Processing** | Pandas, NumPy, OpenPyXL | Vectorized data transformations and Excel ingestion |
 | **Data Warehouse** | SQLite 3, Star Schema DDL | ACID-compliant dimensional data storage with foreign keys |
 | **Machine Learning** | Scikit-Learn, SciPy | K-Means clustering, StandardScaler, Silhouette analysis |
@@ -191,7 +190,7 @@ Smart-Retail-And-Recommendation-System/
 ## 7. Installation Instructions
 
 ### Prerequisites
-- Python 3.10, 3.11, 3.12, or 3.14 installed.
+- Python 3.10, 3.11, or 3.12 installed (also locally verified on 3.14).
 - Git.
 
 ### Step 1: Clone the Repository
@@ -397,6 +396,13 @@ All figures below are validated from the actual warehouse and pipeline execution
 | **Average Rule Confidence** | 52.20% |
 | **Average Rule Lift** | 11.17× (Max Lift: 24.03×) |
 
+> ### 💡 Core Metric Distinctions & Grain Definitions
+> - **Fact-Table Line Items (`Fact_Sales`: 392,692 rows):** The lowest analytical grain in the warehouse. Represents individual SKU purchase events within an order (e.g., an invoice with 5 different products generates 5 fact rows).
+> - **Unique Orders / Invoices (`18,532`):** Total distinct checkout carts (`COUNT(DISTINCT InvoiceNo)`). Multiple line-item rows belong to a single order.
+> - **Unique Customers (`4,338`):** Distinct identified buyer accounts (`COUNT(DISTINCT CustomerID)`). A single customer places multiple orders over time.
+> - **Average Order Value (AOV = £479.56):** Calculated strictly as $\frac{\text{Gross Revenue}}{\text{Total Orders}} = \frac{£8,887,208.89}{18,532}$. Reflects mean total spend per checkout transaction.
+> - **Average Line Item Value (£22.63):** Calculated as $\frac{\text{Gross Revenue}}{\text{Fact Rows}} = \frac{£8,887,208.89}{392,692}$. Distinguishes individual item-level charges from basket-level spend.
+
 ---
 
 ## 15. Practical Business Recommendations
@@ -449,38 +455,43 @@ rootdir: /Users/.../Smart Retail And Recommendation System
 configfile: pytest.ini
 testpaths: tests
 
-tests/test_bi_queries.py::test_get_kpis_accuracy PASSED                  [  3%]
-tests/test_bi_queries.py::test_get_kpis_with_country_filter PASSED       [  6%]
-tests/test_bi_queries.py::test_get_monthly_sales PASSED                  [ 10%]
-tests/test_bi_queries.py::test_get_top_products PASSED                   [ 13%]
-tests/test_bi_queries.py::test_execute_safe_query_select_allowed PASSED  [ 16%]
-tests/test_bi_queries.py::test_execute_safe_query_blocks_destructive_ddl PASSED [ 20%]
-tests/test_customer_segmentation.py::test_calculate_rfm PASSED           [ 23%]
-tests/test_customer_segmentation.py::test_calculate_rfm_scores PASSED    [ 26%]
-tests/test_customer_segmentation.py::test_assign_defensible_cluster_labels PASSED [ 30%]
-tests/test_dashboard_loaders.py::test_check_artifact_status PASSED       [ 33%]
-tests/test_dashboard_loaders.py::test_load_countries_list PASSED         [ 36%]
-tests/test_dashboard_loaders.py::test_load_kpis_live PASSED              [ 40%]
-tests/test_dashboard_loaders.py::test_load_customer_segments_live PASSED [ 43%]
-tests/test_dashboard_loaders.py::test_load_clustering_validation_live PASSED [ 46%]
-tests/test_dashboard_loaders.py::test_load_association_rules_live PASSED [ 50%]
-tests/test_dashboard_loaders.py::test_load_warehouse_tables_live PASSED  [ 53%]
-tests/test_data_cleaning.py::test_clean_dataset_removes_cancellations PASSED [ 56%]
-tests/test_data_cleaning.py::test_clean_dataset_removes_negative_and_zero_quantities PASSED [ 60%]
-tests/test_data_cleaning.py::test_clean_dataset_removes_invalid_unit_prices PASSED [ 63%]
-tests/test_data_cleaning.py::test_clean_dataset_removes_missing_customer_ids PASSED [ 66%]
-tests/test_data_cleaning.py::test_clean_dataset_deduplication PASSED     [ 70%]
-tests/test_data_cleaning.py::test_clean_dataset_total_amount_calculation PASSED [ 73%]
-tests/test_market_basket_analysis.py::test_build_transaction_baskets PASSED [ 76%]
-tests/test_market_basket_analysis.py::test_find_frequent_itemsets PASSED [ 80%]
-tests/test_market_basket_analysis.py::test_generate_rules PASSED         [ 83%]
-tests/test_warehouse.py::test_dim_time_generation PASSED                 [ 86%]
-tests/test_warehouse.py::test_dim_region_mapping PASSED                  [ 90%]
-tests/test_warehouse.py::test_dim_product_aggregation PASSED             [ 93%]
-tests/test_warehouse.py::test_dim_customer_aggregation PASSED            [ 96%]
+tests/test_bi_queries.py::test_get_kpis_accuracy PASSED                  [  2%]
+tests/test_bi_queries.py::test_get_kpis_with_country_filter PASSED       [  5%]
+tests/test_bi_queries.py::test_get_monthly_sales PASSED                  [  8%]
+tests/test_bi_queries.py::test_get_top_products PASSED                   [ 11%]
+tests/test_bi_queries.py::test_execute_safe_query_select_allowed PASSED  [ 14%]
+tests/test_bi_queries.py::test_execute_safe_query_blocks_destructive_ddl PASSED [ 17%]
+tests/test_bi_queries.py::test_execute_safe_query_blocks_insert PASSED   [ 20%]
+tests/test_bi_queries.py::test_execute_safe_query_blocks_update PASSED   [ 23%]
+tests/test_bi_queries.py::test_execute_safe_query_blocks_embedded_drop PASSED [ 26%]
+tests/test_bi_queries.py::test_execute_safe_query_blocks_empty PASSED    [ 29%]
+tests/test_customer_segmentation.py::test_calculate_rfm PASSED           [ 31%]
+tests/test_customer_segmentation.py::test_calculate_rfm_scores PASSED    [ 34%]
+tests/test_customer_segmentation.py::test_assign_defensible_cluster_labels PASSED [ 37%]
+tests/test_dashboard_loaders.py::test_get_db_connection_missing_raises PASSED [ 40%]
+tests/test_dashboard_loaders.py::test_check_artifact_status PASSED       [ 42%]
+tests/test_dashboard_loaders.py::test_load_countries_list PASSED         [ 45%]
+tests/test_dashboard_loaders.py::test_load_kpis_live PASSED              [ 48%]
+tests/test_dashboard_loaders.py::test_load_customer_segments_live PASSED [ 51%]
+tests/test_dashboard_loaders.py::test_load_clustering_validation_live PASSED [ 54%]
+tests/test_dashboard_loaders.py::test_load_association_rules_live PASSED [ 57%]
+tests/test_dashboard_loaders.py::test_load_warehouse_tables_live PASSED  [ 60%]
+tests/test_data_cleaning.py::test_clean_dataset_removes_cancellations PASSED [ 62%]
+tests/test_data_cleaning.py::test_clean_dataset_removes_negative_and_zero_quantities PASSED [ 65%]
+tests/test_data_cleaning.py::test_clean_dataset_removes_invalid_unit_prices PASSED [ 68%]
+tests/test_data_cleaning.py::test_clean_dataset_removes_missing_customer_ids PASSED [ 71%]
+tests/test_data_cleaning.py::test_clean_dataset_deduplication PASSED     [ 74%]
+tests/test_data_cleaning.py::test_clean_dataset_total_amount_calculation PASSED [ 77%]
+tests/test_market_basket_analysis.py::test_build_transaction_baskets PASSED [ 80%]
+tests/test_market_basket_analysis.py::test_find_frequent_itemsets PASSED [ 82%]
+tests/test_market_basket_analysis.py::test_generate_rules PASSED         [ 85%]
+tests/test_warehouse.py::test_dim_time_generation PASSED                 [ 88%]
+tests/test_warehouse.py::test_dim_region_mapping PASSED                  [ 91%]
+tests/test_warehouse.py::test_dim_product_aggregation PASSED             [ 94%]
+tests/test_warehouse.py::test_dim_customer_aggregation PASSED            [ 97%]
 tests/test_warehouse.py::test_warehouse_fact_and_foreign_key_integrity PASSED [100%]
 
-============================== 30 passed in 0.94s ==============================
+============================== 35 passed in 1.31s ==============================
 ```
 
 ---

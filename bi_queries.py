@@ -295,26 +295,59 @@ def get_sales_by_region(conn: sqlite3.Connection) -> pd.DataFrame:
 def execute_safe_query(conn: sqlite3.Connection, sql: str, max_rows: int = 200) -> pd.DataFrame:
     """
     Executes a read-only SQL query safely.
-    Rejects any destructive or schema-altering commands (DROP, DELETE, INSERT, UPDATE, ALTER, ATTACH).
+
+    Security layers:
+      1. Only SELECT / WITH / EXPLAIN as the first keyword.
+      2. Reject multiple statements (semicolons within the query body).
+      3. Reject destructive DDL/DML keywords as isolated tokens.
+      4. Set PRAGMA query_only = ON so SQLite itself refuses any writes.
+      5. Automatic LIMIT injection if absent.
+
+    Note: This provides defense-in-depth but does not constitute a full SQL
+    sandbox. The dashboard also opens the database in read-only mode via
+    URI parameter `?mode=ro`, which prevents writes at the file level.
     """
-    cleaned_sql = sql.strip()
-    first_word = cleaned_sql.split()[0].upper() if cleaned_sql else ""
+    import re
+
+    cleaned_sql = sql.strip().rstrip(";")
+
+    # Reject empty queries
+    if not cleaned_sql:
+        raise ValueError("Empty query is not permitted.")
+
+    # Block multiple statements (semicolons in the query body)
+    if ";" in cleaned_sql:
+        raise ValueError(
+            "Multiple SQL statements are not permitted. "
+            "Please submit a single SELECT query."
+        )
+
+    first_word = cleaned_sql.split()[0].upper()
     if first_word not in ("SELECT", "WITH", "EXPLAIN"):
         raise ValueError("Only read-only SELECT or WITH queries are permitted in the warehouse explorer.")
 
-    disallowed_keywords = ["DROP", "DELETE", "INSERT", "UPDATE", "ALTER", "TRUNCATE", "REPLACE", "CREATE", "ATTACH", "DETACH"]
+    disallowed_keywords = [
+        "DROP", "DELETE", "INSERT", "UPDATE", "ALTER",
+        "TRUNCATE", "REPLACE", "CREATE", "ATTACH", "DETACH",
+    ]
     upper_sql = cleaned_sql.upper()
     for kw in disallowed_keywords:
-        # Check as isolated token
-        tokens = upper_sql.split()
-        if kw in tokens:
+        # Word-boundary match to avoid false positives in column names
+        if re.search(r'\b' + kw + r'\b', upper_sql):
             raise ValueError(f"Disallowed DDL/DML keyword '{kw}' detected. Only SELECT statements are permitted.")
 
-    # Wrap in limit if not present
-    if "LIMIT" not in upper_sql:
-        cleaned_sql += f" LIMIT {max_rows}"
+    # Database-level write protection
+    conn.execute("PRAGMA query_only = ON;")
 
-    return pd.read_sql_query(cleaned_sql, conn)
+    try:
+        # Wrap in limit if not present
+        if "LIMIT" not in upper_sql:
+            cleaned_sql += f" LIMIT {max_rows}"
+
+        return pd.read_sql_query(cleaned_sql, conn)
+    finally:
+        # Restore default to avoid side-effects on shared connections
+        conn.execute("PRAGMA query_only = OFF;")
 
 
 def main():

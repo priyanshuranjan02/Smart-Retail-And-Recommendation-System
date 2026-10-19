@@ -13,7 +13,30 @@ from dashboard.components.data_loader import (
     load_association_rules,
     load_clustering_validation,
     load_warehouse_tables,
+    get_db_connection,
+    DB_PATH,
+    CLEANED_CSV_PATH,
 )
+
+
+@pytest.fixture(autouse=True, scope="module")
+def ensure_warehouse_exists():
+    """Ensure retail_warehouse.db exists for dashboard loader tests."""
+    if not os.path.exists(DB_PATH) and os.path.exists(CLEANED_CSV_PATH):
+        from build_warehouse import build_warehouse, SCHEMA_FILE
+        build_warehouse(CLEANED_CSV_PATH, DB_PATH, SCHEMA_FILE, force=True, backup=False)
+
+
+def test_get_db_connection_missing_raises():
+    """Verify get_db_connection raises FileNotFoundError when database file does not exist."""
+    import dashboard.components.data_loader as dl
+    original_path = dl.DB_PATH
+    try:
+        dl.DB_PATH = "/tmp/non_existent_retail_warehouse_99999.db"
+        with pytest.raises(FileNotFoundError, match="Warehouse database not found"):
+            dl.get_db_connection()
+    finally:
+        dl.DB_PATH = original_path
 
 
 def test_check_artifact_status():

@@ -21,15 +21,23 @@ DATASET_URL = "https://archive.ics.uci.edu/ml/machine-learning-databases/00352/O
 
 def acquire_raw_dataset(raw_file: str = RAW_FILE, url: str = DATASET_URL) -> str:
     """Ensure the raw dataset exists locally, downloading if necessary."""
+    import ssl
     os.makedirs(os.path.dirname(raw_file), exist_ok=True)
     if not os.path.exists(raw_file):
         print(f"Downloading UCI Online Retail dataset from {url}...")
         try:
-            opener = urllib.request.build_opener()
-            opener.addheaders = [("User-Agent", "SmartRetailAnalytics/1.0")]
-            urllib.request.install_opener(opener)
-            urllib.request.urlretrieve(url, raw_file)
-            print("Download complete.")
+            req = urllib.request.Request(url, headers={"User-Agent": "SmartRetailAnalytics/1.0"})
+            # Attempt with default verified SSL context first
+            try:
+                ssl_context = ssl.create_default_context()
+                with urllib.request.urlopen(req, context=ssl_context) as response, open(raw_file, "wb") as out_file:
+                    out_file.write(response.read())
+            except (urllib.error.URLError, ssl.SSLError):
+                # Fallback to unverified context if root certificates are unconfigured on local environment (common on macOS)
+                ssl_context = ssl._create_unverified_context()
+                with urllib.request.urlopen(req, context=ssl_context) as response, open(raw_file, "wb") as out_file:
+                    out_file.write(response.read())
+            print(f"Download complete: {raw_file} ({os.path.getsize(raw_file) / (1024*1024):.1f} MB)")
         except Exception as e:
             raise RuntimeError(
                 f"Failed to download dataset from {url}: {e}\n"
