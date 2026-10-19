@@ -30,9 +30,13 @@ desktop.ini
 data/raw/*.xlsx
 data/raw/*.csv
 *.db
+*.bak
 
 # Models (large binaries)
 models/*.pkl
+
+# Testing & Cache
+.pytest_cache/
 
 # Logs
 *.log

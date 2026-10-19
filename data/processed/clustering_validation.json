@@ -1,0 +1,129 @@
+{
+  "dataset_customers": 4338,
+  "tested_k": [
+    {
+      "k": 2,
+      "inertia": 9014.57,
+      "silhouette": 0.8958
+    },
+    {
+      "k": 3,
+      "inertia": 5441.32,
+      "silhouette": 0.5942
+    },
+    {
+      "k": 4,
+      "inertia": 4096.3,
+      "silhouette": 0.6162
+    },
+    {
+      "k": 5,
+      "inertia": 3119.79,
+      "silhouette": 0.6165
+    },
+    {
+      "k": 6,
+      "inertia": 2473.79,
+      "silhouette": 0.5983
+    },
+    {
+      "k": 7,
+      "inertia": 2023.59,
+      "silhouette": 0.5165
+    },
+    {
+      "k": 8,
+      "inertia": 1717.01,
+      "silhouette": 0.4859
+    }
+  ],
+  "max_silhouette_k": 2,
+  "max_silhouette_score": 0.8958,
+  "selected_k": 4,
+  "selected_k_silhouette": 0.6162,
+  "selection_rationale": "While K=2 yields the highest mathematical silhouette score (0.8958), it trivially separates 26 extreme outliers from 4,312 customers (99.4%), which provides no operational value for marketing. K=4 provides a highly actionable business segmentation: it distinguishes VIP B2B wholesale champions (13 customers, \u00a3127k spend), high-frequency loyalists (204 customers, \u00a312.7k spend), active retail shoppers (3,054 customers, \u00a31.35k spend), and churned at-risk buyers (1,067 customers, \u00a3479 spend), with a robust silhouette score of 0.6162.",
+  "cluster_profiles": {
+    "0": {
+      "Count": 3054,
+      "Recency_Mean": 43.7,
+      "Recency_Median": 32.0,
+      "Frequency_Mean": 3.68,
+      "Frequency_Median": 3.0,
+      "Monetary_Mean": 1353.63,
+      "Monetary_Median": 826.27,
+      "CompositeScore": 9.0,
+      "Segment": "Regular Customers"
+    },
+    "1": {
+      "Count": 1067,
+      "Recency_Mean": 248.08,
+      "Recency_Median": 243.0,
+      "Frequency_Mean": 1.55,
+      "Frequency_Median": 1.0,
+      "Monetary_Mean": 478.85,
+      "Monetary_Median": 310.26,
+      "CompositeScore": 12.0,
+      "Segment": "At-Risk (Low-Value)"
+    },
+    "2": {
+      "Count": 13,
+      "Recency_Mean": 7.38,
+      "Recency_Median": 2.0,
+      "Frequency_Mean": 82.54,
+      "Frequency_Median": 63.0,
+      "Monetary_Mean": 127187.96,
+      "Monetary_Median": 117210.08,
+      "CompositeScore": 3.0,
+      "Segment": "Champions (High-Value)"
+    },
+    "3": {
+      "Count": 204,
+      "Recency_Mean": 15.5,
+      "Recency_Median": 5.0,
+      "Frequency_Mean": 22.33,
+      "Frequency_Median": 19.0,
+      "Monetary_Mean": 12690.5,
+      "Monetary_Median": 7990.2,
+      "CompositeScore": 6.0,
+      "Segment": "Loyal Customers"
+    }
+  },
+  "kmeans_distribution": {
+    "Regular Customers": 3054,
+    "At-Risk (Low-Value)": 1067,
+    "Loyal Customers": 204,
+    "Champions (High-Value)": 13
+  },
+  "rfm_score_distribution": {
+    "Champions": 1243,
+    "Needs Attention": 1188,
+    "Potential Loyalists": 1022,
+    "At Risk / Lost": 885
+  },
+  "business_strategies": {
+    "Champions (High-Value)": {
+      "objective": "Retain & Partner",
+      "behavior": "Ultra-high spend, weekly ordering, B2B wholesale buyers",
+      "strategy": "Dedicated account manager, customized bulk pricing, proactive order fulfillment",
+      "kpi_to_monitor": "Churn rate, Order frequency stability"
+    },
+    "Loyal Customers": {
+      "objective": "Cross-sell & Cultivate",
+      "behavior": "Frequent repeat buyers with consistent recent spend",
+      "strategy": "Tiered loyalty rewards, early product launches, volume discounts",
+      "kpi_to_monitor": "Average order value (AOV), Customer lifetime value (CLV)"
+    },
+    "Regular Customers": {
+      "objective": "Nurture & Upsell",
+      "behavior": "Active shoppers with moderate basket sizes and seasonal buying",
+      "strategy": "Product recommendation bundles, personalized email triggers, category cross-sell",
+      "kpi_to_monitor": "Repeat purchase rate, Purchase frequency"
+    },
+    "At-Risk (Low-Value)": {
+      "objective": "Re-engage or Divest",
+      "behavior": "Inactive for >200 days, low order count (1-2 purchases)",
+      "strategy": "Win-back discount campaigns, satisfaction surveys, exit feedback",
+      "kpi_to_monitor": "Reactivation rate, Cost per reactivation"
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "total_transactions": 18532,
+  "unique_products": 3866,
+  "min_support_threshold": 0.02,
+  "min_confidence_threshold": 0.3,
+  "min_lift_threshold": 1.0,
+  "frequent_itemsets_count": 243,
+  "rules_count": 68,
+  "avg_confidence": 0.522,
+  "avg_lift": 11.1729,
+  "max_lift": 24.0278,
+  "top_rule_sample": {
+    "antecedent": "ROSES REGENCY TEACUP AND SAUCER, PINK REGENCY TEACUP AND SAUCER",
+    "consequent": "GREEN REGENCY TEACUP AND SAUCER",
+    "support": 0.021,
+    "confidence": 0.8945,
+    "lift": 23.9896,
+    "explanation": "Rule: [ROSES REGENCY TEACUP AND SAUCER, PINK REGENCY TEACUP AND SAUCER] -> [GREEN REGENCY TEACUP AND SAUCER]. Support = 2.10% of all 18,532 orders contained both items. Confidence = 89.4% of customers who bought the antecedent also bought the consequent. Lift = 23.99x means the pair occurs 23.99 times more frequently than if purchases were independent."
+  },
+  "definitions": {
+    "support": "Frequency of itemset co-occurrence across all transactions (P(A and B)).",
+    "confidence": "Conditional probability that consequent B is bought given antecedent A (P(B|A)).",
+    "lift": "Ratio of observed co-occurrence to expected co-occurrence under statistical independence (P(B|A) / P(B)). Lift > 1 indicates positive association.",
+    "caveat": "Association rules show statistical correlation and co-purchase affinity, not direct causal proof or guaranteed future purchases."
+  }
+}

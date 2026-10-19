@@ -4,138 +4,122 @@ Dataset: UCI Online Retail (Online Retail.xlsx)
 """
 
 import os
+import urllib.request
 import pandas as pd
 import numpy as np
-import urllib.request
 
 # ──────────────────────────────────────────────
-# 1. DOWNLOAD & LOAD THE DATASET
+# CONFIGURATION
 # ──────────────────────────────────────────────
 
 RAW_DIR = "data/raw"
 CLEANED_DIR = "data/cleaned"
 RAW_FILE = os.path.join(RAW_DIR, "OnlineRetail.xlsx")
 CLEANED_FILE = os.path.join(CLEANED_DIR, "online_retail_cleaned.csv")
+DATASET_URL = "https://archive.ics.uci.edu/ml/machine-learning-databases/00352/Online%20Retail.xlsx"
 
-os.makedirs(RAW_DIR, exist_ok=True)
-os.makedirs(CLEANED_DIR, exist_ok=True)
 
-# Download if not already present
-if not os.path.exists(RAW_FILE):
-    print("Downloading UCI Online Retail dataset...")
-    url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00352/Online%20Retail.xlsx"
-    urllib.request.urlretrieve(url, RAW_FILE)
-    print("Download complete.")
-else:
-    print("Dataset already exists. Skipping download.")
+def acquire_raw_dataset(raw_file: str = RAW_FILE, url: str = DATASET_URL) -> str:
+    """Ensure the raw dataset exists locally, downloading if necessary."""
+    os.makedirs(os.path.dirname(raw_file), exist_ok=True)
+    if not os.path.exists(raw_file):
+        print(f"Downloading UCI Online Retail dataset from {url}...")
+        try:
+            opener = urllib.request.build_opener()
+            opener.addheaders = [("User-Agent", "SmartRetailAnalytics/1.0")]
+            urllib.request.install_opener(opener)
+            urllib.request.urlretrieve(url, raw_file)
+            print("Download complete.")
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to download dataset from {url}: {e}\n"
+                f"Please manually place 'OnlineRetail.xlsx' into '{os.path.dirname(raw_file)}/'."
+            ) from e
+    else:
+        print("Raw dataset already exists. Skipping download.")
+    return raw_file
 
-# Load the Excel file
-print("Loading dataset...")
-df = pd.read_excel(RAW_FILE, engine="openpyxl")
-print(f"Raw dataset shape: {df.shape}")
-print(f"Columns: {list(df.columns)}\n")
 
-# ──────────────────────────────────────────────
-# 2. INSPECT THE DATA — NULLS, DUPLICATES, INVALID RECORDS
-# ──────────────────────────────────────────────
+def clean_dataset(df_raw: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
+    """
+    Cleans raw retail transaction records according to documented business rules:
+      1. Remove cancelled invoices (InvoiceNo starts with 'C')
+      2. Filter out non-positive quantities (<= 0)
+      3. Filter out non-positive unit prices (<= 0)
+      4. Drop records with missing CustomerID (imputation invalid for identity)
+      5. Convert CustomerID to integer
+      6. Remove duplicate rows
+      7. Calculate TotalAmount = round(Quantity * UnitPrice, 2)
+      8. Parse InvoiceDate to datetime
+    """
+    # Pre-cleaning quality audit
+    stats = {
+        "raw_rows": len(df_raw),
+        "raw_cols": len(df_raw.columns),
+        "cancelled_rows": int(df_raw["InvoiceNo"].astype(str).str.startswith("C").sum()),
+        "non_positive_qty_rows": int((df_raw["Quantity"] <= 0).sum()),
+        "non_positive_price_rows": int((df_raw["UnitPrice"] <= 0).sum()),
+        "missing_customer_id_rows": int(df_raw["CustomerID"].isnull().sum()),
+        "duplicate_rows": int(df_raw.duplicated().sum()),
+    }
 
-print("=" * 60)
-print("DATA QUALITY REPORT (Before Cleaning)")
-print("=" * 60)
+    df = df_raw.copy()
 
-# Null values per column
-print("\n--- Null Values ---")
-null_counts = df.isnull().sum()
-null_pct = (df.isnull().sum() / len(df) * 100).round(2)
-null_report = pd.DataFrame({"NullCount": null_counts, "NullPercent": null_pct})
-print(null_report[null_report["NullCount"] > 0])
+    # Ensure InvoiceDate is datetime
+    if not pd.api.types.is_datetime64_any_dtype(df["InvoiceDate"]):
+        df["InvoiceDate"] = pd.to_datetime(df["InvoiceDate"])
 
-# Duplicate rows
-dup_count = df.duplicated().sum()
-print(f"\n--- Duplicate Rows: {dup_count} ({dup_count / len(df) * 100:.2f}%) ---")
+    # 1. Cancelled invoices
+    df = df[~df["InvoiceNo"].astype(str).str.startswith("C")]
 
-# Negative quantities (potential returns / errors)
-neg_qty = (df["Quantity"] <= 0).sum()
-print(f"\n--- Rows with Quantity <= 0: {neg_qty} ---")
+    # 2. Non-positive quantities
+    df = df[df["Quantity"] > 0]
 
-# Zero or negative unit prices
-bad_price = (df["UnitPrice"] <= 0).sum()
-print(f"--- Rows with UnitPrice <= 0: {bad_price} ---")
+    # 3. Non-positive unit prices
+    df = df[df["UnitPrice"] > 0]
 
-# Cancelled invoices (InvoiceNo starts with 'C')
-cancelled = df["InvoiceNo"].astype(str).str.startswith("C").sum()
-print(f"--- Cancelled Invoices (starts with 'C'): {cancelled} ---\n")
+    # 4. Missing CustomerID
+    df = df.dropna(subset=["CustomerID"])
+    df["CustomerID"] = df["CustomerID"].astype(int)
 
-# ──────────────────────────────────────────────
-# 3. REMOVE CANCELLED INVOICES & NEGATIVE QUANTITIES
-# ──────────────────────────────────────────────
+    # 5. Duplicate rows
+    df = df.drop_duplicates()
 
-print("Removing cancelled invoices...")
-df = df[~df["InvoiceNo"].astype(str).str.startswith("C")]
-print(f"  Shape after removing cancellations: {df.shape}")
+    # 6. TotalAmount
+    df["TotalAmount"] = (df["Quantity"] * df["UnitPrice"]).round(2)
 
-print("Removing rows with Quantity <= 0...")
-df = df[df["Quantity"] > 0]
-print(f"  Shape after removing non-positive quantities: {df.shape}")
+    stats["cleaned_rows"] = len(df)
+    stats["cleaned_customers"] = int(df["CustomerID"].nunique())
+    stats["cleaned_products"] = int(df["StockCode"].nunique())
+    stats["cleaned_invoices"] = int(df["InvoiceNo"].nunique())
+    stats["total_revenue"] = float(df["TotalAmount"].sum().round(2))
 
-print("Removing rows with UnitPrice <= 0...")
-df = df[df["UnitPrice"] > 0]
-print(f"  Shape after removing non-positive prices: {df.shape}")
+    return df, stats
 
-# ──────────────────────────────────────────────
-# 4. HANDLE MISSING CUSTOMER IDs
-# ──────────────────────────────────────────────
 
-missing_cid_before = df["CustomerID"].isnull().sum()
-print(f"\nMissing CustomerID values: {missing_cid_before} ({missing_cid_before / len(df) * 100:.2f}%)")
+def run_cleaning_pipeline(raw_file: str = RAW_FILE, cleaned_file: str = CLEANED_FILE) -> pd.DataFrame:
+    """Execute the end-to-end data cleaning pipeline and save results."""
+    acquire_raw_dataset(raw_file)
 
-# Strategy: Drop rows with missing CustomerID
-# Rationale: CustomerID is essential for segmentation, recommendations, and churn.
-#            Imputation is not meaningful for a unique identifier.
-df = df.dropna(subset=["CustomerID"])
-print(f"  Shape after dropping missing CustomerID: {df.shape}")
+    print(f"Loading raw dataset from {raw_file}...")
+    df_raw = pd.read_excel(raw_file, engine="openpyxl")
+    print(f"Raw dataset shape: {df_raw.shape}")
 
-# Convert CustomerID to integer (it was float due to NaN presence)
-df["CustomerID"] = df["CustomerID"].astype(int)
+    df_cleaned, stats = clean_dataset(df_raw)
 
-# ──────────────────────────────────────────────
-# 5. REMOVE DUPLICATE ROWS
-# ──────────────────────────────────────────────
+    os.makedirs(os.path.dirname(cleaned_file), exist_ok=True)
+    df_cleaned.to_csv(cleaned_file, index=False)
+    print(f"\nCleaned dataset saved to: {cleaned_file}")
+    print(f"Final record count: {len(df_cleaned):,}")
+    print(f"Total Revenue: £{stats['total_revenue']:,.2f}")
+    print("Data cleaning pipeline complete.")
+    return df_cleaned
 
-dup_before = df.duplicated().sum()
-print(f"\nDuplicate rows remaining: {dup_before}")
-df = df.drop_duplicates()
-print(f"  Shape after removing duplicates: {df.shape}")
 
-# ──────────────────────────────────────────────
-# 6. CREATE TotalAmount COLUMN
-# ──────────────────────────────────────────────
+if __name__ == "__main__":
+    # If cleaned file already exists and raw is not present, report and offer options
+    if not os.path.exists(RAW_FILE) and os.path.exists(CLEANED_FILE):
+        print(f"Notice: Cleaned file already exists at {CLEANED_FILE}.")
+        print("To clean from source, downloading raw dataset...")
+    run_cleaning_pipeline()
 
-df["TotalAmount"] = (df["Quantity"] * df["UnitPrice"]).round(2)
-print(f"\nTotalAmount column created.")
-print(f"  Min: {df['TotalAmount'].min()}")
-print(f"  Max: {df['TotalAmount'].max()}")
-print(f"  Mean: {df['TotalAmount'].mean():.2f}")
-
-# ──────────────────────────────────────────────
-# 7. FINAL VALIDATION
-# ──────────────────────────────────────────────
-
-print("\n" + "=" * 60)
-print("DATA QUALITY REPORT (After Cleaning)")
-print("=" * 60)
-print(f"Final shape: {df.shape}")
-print(f"Remaining nulls:\n{df.isnull().sum()}")
-print(f"Remaining duplicates: {df.duplicated().sum()}")
-print(f"\nData types:\n{df.dtypes}")
-print(f"\nSample rows:")
-print(df.head(10).to_string(index=False))
-
-# ──────────────────────────────────────────────
-# 8. SAVE CLEANED DATASET
-# ──────────────────────────────────────────────
-
-df.to_csv(CLEANED_FILE, index=False)
-print(f"\nCleaned dataset saved to: {CLEANED_FILE}")
-print(f"Final record count: {len(df):,}")
-print("Data cleaning pipeline complete.")

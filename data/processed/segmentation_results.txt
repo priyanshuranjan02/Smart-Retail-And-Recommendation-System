@@ -1,32 +1,33 @@
 Total customers: 4338
 
-K-MEANS CLUSTER BREAKDOWN
+K-MEANS CLUSTER BREAKDOWN (Defensible Profiles)
+  Regular Customers
+    Count: 3054 (70.4%)
+    Recency:   Mean 43.7d | Median 32.0d
+    Frequency: Mean 3.7 orders | Median 3.0 orders
+    Monetary:  Mean £1,353.63 | Median £826.27
+
   At-Risk (Low-Value)
     Count: 1067 (24.6%)
-    Avg Recency:  248 days
-    Avg Frequency: 1.6 orders
-    Avg Monetary:  479 GBP
-
-  Champions (High-Value)
-    Count: 13 (0.3%)
-    Avg Recency:  7 days
-    Avg Frequency: 82.5 orders
-    Avg Monetary:  127188 GBP
+    Recency:   Mean 248.1d | Median 243.0d
+    Frequency: Mean 1.6 orders | Median 1.0 orders
+    Monetary:  Mean £478.85 | Median £310.26
 
   Loyal Customers
     Count: 204 (4.7%)
-    Avg Recency:  16 days
-    Avg Frequency: 22.3 orders
-    Avg Monetary:  12691 GBP
+    Recency:   Mean 15.5d | Median 5.0d
+    Frequency: Mean 22.3 orders | Median 19.0 orders
+    Monetary:  Mean £12,690.50 | Median £7,990.20
 
-  Regular Customers
-    Count: 3054 (70.4%)
-    Avg Recency:  44 days
-    Avg Frequency: 3.7 orders
-    Avg Monetary:  1354 GBP
+  Champions (High-Value)
+    Count: 13 (0.3%)
+    Recency:   Mean 7.4d | Median 2.0d
+    Frequency: Mean 82.5 orders | Median 63.0 orders
+    Monetary:  Mean £127,187.96 | Median £117,210.08
+
 
 RFM SCORE BREAKDOWN
-  Champions: 1254 (28.9%)
-  Potential Loyalists: 1025 (23.6%)
-  Needs Attention: 1178 (27.2%)
-  At Risk / Lost: 881 (20.3%)
+  Champions: 1243 (28.7%)
+  Needs Attention: 1188 (27.4%)
+  Potential Loyalists: 1022 (23.6%)
+  At Risk / Lost: 885 (20.4%)
