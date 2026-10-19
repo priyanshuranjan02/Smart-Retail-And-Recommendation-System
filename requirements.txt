@@ -1,0 +1,38 @@
+# Smart Retail Analytics & Recommendation Warehouse
+# Python dependencies
+
+# --- Data Handling ---
+pandas>=2.0
+numpy>=1.24
+openpyxl
+
+# --- Database / Warehouse ---
+sqlalchemy>=2.0
+
+# --- Visualisation ---
+matplotlib>=3.7
+seaborn>=0.12
+plotly>=5.15
+
+# --- Machine Learning ---
+scikit-learn>=1.3
+scipy>=1.11
+
+# --- Recommendation Engine ---
+scikit-surprise
+
+# --- Market Basket Analysis ---
+mlxtend>=0.22
+
+# --- NLP / Sentiment ---
+nltk>=3.8
+textblob
+
+# --- Dashboard ---
+streamlit>=1.28
+
+# --- Utilities ---
+joblib
+tqdm
+python-dotenv
+jupyterlab

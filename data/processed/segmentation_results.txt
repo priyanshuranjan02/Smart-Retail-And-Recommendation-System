@@ -1,0 +1,32 @@
+Total customers: 4338
+
+K-MEANS CLUSTER BREAKDOWN
+  At-Risk (Low-Value)
+    Count: 1067 (24.6%)
+    Avg Recency:  248 days
+    Avg Frequency: 1.6 orders
+    Avg Monetary:  479 GBP
+
+  Champions (High-Value)
+    Count: 13 (0.3%)
+    Avg Recency:  7 days
+    Avg Frequency: 82.5 orders
+    Avg Monetary:  127188 GBP
+
+  Loyal Customers
+    Count: 204 (4.7%)
+    Avg Recency:  16 days
+    Avg Frequency: 22.3 orders
+    Avg Monetary:  12691 GBP
+
+  Regular Customers
+    Count: 3054 (70.4%)
+    Avg Recency:  44 days
+    Avg Frequency: 3.7 orders
+    Avg Monetary:  1354 GBP
+
+RFM SCORE BREAKDOWN
+  Champions: 1254 (28.9%)
+  Potential Loyalists: 1025 (23.6%)
+  Needs Attention: 1178 (27.2%)
+  At Risk / Lost: 881 (20.3%)
