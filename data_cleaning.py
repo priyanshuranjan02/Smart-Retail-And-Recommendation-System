@@ -20,31 +20,84 @@ DATASET_URL = "https://archive.ics.uci.edu/ml/machine-learning-databases/00352/O
 
 
 def acquire_raw_dataset(raw_file: str = RAW_FILE, url: str = DATASET_URL) -> str:
-    """Ensure the raw dataset exists locally, downloading if necessary."""
+    """
+    Ensure the raw dataset exists locally, downloading over verified HTTPS if necessary.
+    Enforces strict SSL/TLS certificate verification using certifi's CA bundle.
+    Uses atomic writes via a temporary file to avoid leaving partial downloads on failure.
+    """
     import ssl
     os.makedirs(os.path.dirname(raw_file), exist_ok=True)
-    if not os.path.exists(raw_file):
-        print(f"Downloading UCI Online Retail dataset from {url}...")
-        try:
-            req = urllib.request.Request(url, headers={"User-Agent": "SmartRetailAnalytics/1.0"})
-            # Attempt with default verified SSL context first
+    if os.path.exists(raw_file):
+        print(f"Raw dataset already exists at {raw_file}. Skipping download.")
+        return raw_file
+
+    print(f"Downloading UCI Online Retail dataset from {url}...")
+    temp_file = f"{raw_file}.tmp"
+
+    try:
+        import certifi
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
+    except ImportError:
+        ssl_context = ssl.create_default_context()
+
+    req = urllib.request.Request(url, headers={"User-Agent": "SmartRetailAnalytics/1.0"})
+
+    try:
+        with urllib.request.urlopen(req, context=ssl_context) as response, open(temp_file, "wb") as out_file:
+            while True:
+                chunk = response.read(65536)
+                if not chunk:
+                    break
+                out_file.write(chunk)
+        # Atomically replace target with completely downloaded temp file
+        os.replace(temp_file, raw_file)
+        size_mb = os.path.getsize(raw_file) / (1024 * 1024)
+        print(f"Download complete: {raw_file} ({size_mb:.1f} MB)")
+    except (ssl.SSLCertVerificationError, ssl.SSLError) as ssl_err:
+        if os.path.exists(temp_file):
             try:
-                ssl_context = ssl.create_default_context()
-                with urllib.request.urlopen(req, context=ssl_context) as response, open(raw_file, "wb") as out_file:
-                    out_file.write(response.read())
-            except (urllib.error.URLError, ssl.SSLError):
-                # Fallback to unverified context if root certificates are unconfigured on local environment (common on macOS)
-                ssl_context = ssl._create_unverified_context()
-                with urllib.request.urlopen(req, context=ssl_context) as response, open(raw_file, "wb") as out_file:
-                    out_file.write(response.read())
-            print(f"Download complete: {raw_file} ({os.path.getsize(raw_file) / (1024*1024):.1f} MB)")
-        except Exception as e:
+                os.remove(temp_file)
+            except OSError:
+                pass
+        raise RuntimeError(
+            f"SSL certificate verification failed while connecting to {url}: {ssl_err}\n"
+            "To resolve this issue:\n"
+            "  1. Ensure your local CA certificates are up to date: pip install --upgrade certifi\n"
+            "  2. On macOS, run the Python 'Install Certificates.command' script.\n"
+            f"  3. Alternatively, manually download 'OnlineRetail.xlsx' from {url} "
+            f"and place it in '{os.path.dirname(raw_file)}/'."
+        ) from ssl_err
+    except urllib.error.URLError as url_err:
+        if os.path.exists(temp_file):
+            try:
+                os.remove(temp_file)
+            except OSError:
+                pass
+        reason = getattr(url_err, "reason", None)
+        if isinstance(reason, (ssl.SSLCertVerificationError, ssl.SSLError)) or "CERTIFICATE_VERIFY_FAILED" in str(url_err):
             raise RuntimeError(
-                f"Failed to download dataset from {url}: {e}\n"
-                f"Please manually place 'OnlineRetail.xlsx' into '{os.path.dirname(raw_file)}/'."
-            ) from e
-    else:
-        print("Raw dataset already exists. Skipping download.")
+                f"SSL certificate verification failed while connecting to {url}: {url_err}\n"
+                "To resolve this issue:\n"
+                "  1. Ensure your local CA certificates are up to date: pip install --upgrade certifi\n"
+                "  2. On macOS, run the Python 'Install Certificates.command' script.\n"
+                f"  3. Alternatively, manually download 'OnlineRetail.xlsx' from {url} "
+                f"and place it in '{os.path.dirname(raw_file)}/'."
+            ) from url_err
+        raise RuntimeError(
+            f"Failed to download dataset from {url}: {url_err}\n"
+            f"Please check your internet connection or manually place 'OnlineRetail.xlsx' "
+            f"into '{os.path.dirname(raw_file)}/'."
+        ) from url_err
+    except Exception as e:
+        if os.path.exists(temp_file):
+            try:
+                os.remove(temp_file)
+            except OSError:
+                pass
+        raise RuntimeError(
+            f"Failed to download dataset from {url}: {e}\n"
+            f"Please manually place 'OnlineRetail.xlsx' into '{os.path.dirname(raw_file)}/'."
+        ) from e
     return raw_file
 
 
