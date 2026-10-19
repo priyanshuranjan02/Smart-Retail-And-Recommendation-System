@@ -26,10 +26,20 @@ def acquire_raw_dataset(raw_file: str = RAW_FILE, url: str = DATASET_URL) -> str
     Uses atomic writes via a temporary file to avoid leaving partial downloads on failure.
     """
     import ssl
+    import urllib.parse
+
     os.makedirs(os.path.dirname(raw_file), exist_ok=True)
     if os.path.exists(raw_file):
         print(f"Raw dataset already exists at {raw_file}. Skipping download.")
         return raw_file
+
+    # Reject non-HTTPS URLs using Python's standard URL parser
+    parsed_url = urllib.parse.urlparse(url)
+    if parsed_url.scheme.lower() != "https":
+        raise ValueError(
+            f"Insecure or unsupported URL scheme '{parsed_url.scheme}'. "
+            f"Dataset download requires 'https'. Provided URL: {url}"
+        )
 
     print(f"Downloading UCI Online Retail dataset from {url}...")
     temp_file = f"{raw_file}.tmp"

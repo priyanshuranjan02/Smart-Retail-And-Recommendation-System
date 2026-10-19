@@ -172,3 +172,29 @@ def test_acquire_raw_dataset_general_network_failure(tmp_path, monkeypatch):
     assert not os.path.exists(test_file)
     assert not os.path.exists(f"{test_file}.tmp")
 
+
+def test_acquire_raw_dataset_rejects_non_https_url(tmp_path, monkeypatch):
+    """Verify non-HTTPS URLs (http://, ftp://, file://) are rejected with ValueError before opening socket."""
+    test_file = tmp_path / "insecure.xlsx"
+
+    mock_urlopen = MagicMock()
+    monkeypatch.setattr(urllib.request, "urlopen", mock_urlopen)
+
+    # Plain http:// scheme
+    with pytest.raises(ValueError, match="requires 'https'"):
+        acquire_raw_dataset(str(test_file), url="http://archive.ics.uci.edu/ml/dataset.xlsx")
+
+    # ftp:// scheme
+    with pytest.raises(ValueError, match="requires 'https'"):
+        acquire_raw_dataset(str(test_file), url="ftp://archive.ics.uci.edu/ml/dataset.xlsx")
+
+    # file:// scheme
+    with pytest.raises(ValueError, match="requires 'https'"):
+        acquire_raw_dataset(str(test_file), url="file:///etc/passwd")
+
+    # Ensure network socket was never opened and no temp files created
+    mock_urlopen.assert_not_called()
+    assert not os.path.exists(test_file)
+    assert not os.path.exists(f"{test_file}.tmp")
+
+
