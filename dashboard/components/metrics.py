@@ -4,7 +4,7 @@ Provides standardized formatting and rich UI KPI card renderers.
 """
 
 import streamlit as st
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 
 def format_currency(val: Union[int, float], compact: bool = False) -> str:
